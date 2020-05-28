@@ -1,88 +1,106 @@
 #Sudoku Solver
 """
 Version | Date | Comments
+1.1.0	28-05-20	Used recursion and backwards tracing to solve board
 1.0.0	27-05-20	Initial release
 
 ABOUT
-Script to solve a sodoku puzzle using a backtracking algorithm
-
-KNOWN BUGS/ISSUES
+Script to solve a sudoku puzzle using a backtracking algorithm
 
 """
+
+#---------Global Variables---------
+verbose = 0
+
 #---------FUNCTIONS--------
 
 #Function to print the current board
 def print_board(board):
 	for i in range(len(board)):
-		print(" ")
+
+		if i % 3 == 0 and i != 0:
+			print("- - - - - - - - - - - -")
+
 		for j in range(len(board)):
 			print(board[i][j],end=' ')
+
 			if (j+1) % 3 == 0:
 				print("|",end=' ')
-	print("\n")
+		print(" ")
 		
 #Function to search for an unsolved element
 def find_empty_cell(board):
 	for i in range(len(board)):
+
 		for j in range(len(board)):
-			#print(board[i][j])
-			if(board[i][j] == 0):
-				#print("DEBUG: Empty cell found!")
-				#print(board[i][j])
-				return board[i][j],i,j
 
+			if board[i][j] == 0:
+				return i,j
 
-#Find solution for the given cell at board[x][y]
-def find_cell_solution(board,x,y):
-
-	print("DEBUG: Finding solution for",x,y)
-	for i in range (1,10):
-		print("DEBUG: Trial solution:",i)
-		valid = validate_cell_solution(board,x,y,i)
-		if  valid == True:
-			print("DEBUG: Found solution to be",i)
-			return i
-
-		else:
-			print("Error: No solution found")
+	return None #if no 'empty' (0) squares remain, the board is solved, end recursion
 		
 
 def validate_cell_solution(board,x,y,num):
 		#Check Row
-		for j in range(0,9):
-			if num == board[j][y] and j != x:
+		for i in range(0,9):
+			if num == board[i][y] and i != x:
 				#Invalid solution
-				print("DEBUG: Invalid due to ROW using",j)
 				return False
 				
 
 		#Check Col
-		for j in range(0,9):
-			if num == board[x][j] and j!=x:
+		for i in range(0,9):
+			if num == board[x][i] and i!=x:
 				#Invalid solution
-				print("DEBUG: Invalid due to COL using",j)
 				return False
 
-		#Check Box - ADDME!!!
+		#Check Box
+		#Find current 3x3 box
+		box_x = y // 3
+		box_y = x // 3
+		#Cycle through all box elements using binomial expressions
+		for i in range(box_y * 3, box_y*3 + 3):
 
+			for j in range(box_x * 3, box_x*3 + 3):
 
+				if num == board[i][j] and (i,j) != (x,y):
+					#Invalid solution
+					return False
 
-		#return True if the trial solution passes all 3 checks
+		#Return True if the trial solution passes all 3 checks
 		return True
 
 
-
-
 #Function to find a solution to the empty cell
+#Function uses recursion until entire board is solved
 def solve(board):
-	cell,x,y = find_empty_cell(board)
+	#verbose option to show each step of board being solved
+	if verbose > 0:
+		print("SOLVING...")
+		print_board(board)
 
-	board[x][y] = find_cell_solution(board,x,y)
+	find = find_empty_cell(board)
+	if not find:
+		return True #Board has been solved
+	else:
+		x,y = find
+
+	for i in range(1,10): #sudoku cell solutions must be a number from 1-9
+		if validate_cell_solution(board,x,y,i):
+			board[x][y] = i
+
+			if solve(board):
+				return True
+			if verbose > 0:
+				print("BACKTRACKING...")
+			board[x][y] = 0 #backtracking
+
+	return False
 
 
 
 #---------CODE-------------
-print("Sudoku Solver Version 1.0.0")
+print("Sudoku Solver Version 1.1.0")
 
 
 #Puzzle board that must be solved
@@ -101,11 +119,13 @@ board = [
 
 
 #Print the inital board
+print("\n===\tInitial Board\t===")
 print_board(board)
 
-#Put in while false/true loop!!
+#Recursive solve function
 solve(board)
 
 #Print the solved board
+print("\n===\tSolved Board\t===")
 print_board(board)
 
